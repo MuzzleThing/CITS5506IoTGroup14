@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "bootstrap": "^5.3.5"
+    "bootstrap": "^5.3.5",
+    "socket.io-client": "^4.8.1"
   }
 }
