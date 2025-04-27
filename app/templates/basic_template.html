@@ -4,11 +4,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="../bootstrap/bootstrap.min.css">
-        <link rel="stylesheet" href="../src/my_css.css">
-        <script src="../bootstrap/bootstrap.bundle.min.js" async defer></script>
+        <link rel="stylesheet" href="../static/bootstrap.min.css">
+        <link rel="stylesheet" href="../static/my_css.css">
+        <script src="../static/bootstrap.bundle.min.js" async defer></script>
         {% block head %}
-        {% end block%}
+        {% endblock %}
     </head>
     <body>
         <header class="bg-secondary" id="topBar">
@@ -17,14 +17,14 @@
                 <!-- <h3>Smart Food Inventory Management System: {{currentPage}}</h3> -->
                 <div class="btn-group">
                     <button class="btn btn-info"> Home </button>
-                    <button class="btn btn-info"> test </button>
-                    <button class="btn btn-info"> test </button>
+                    <button class="btn btn-info"> Inventory </button>
+                    <button class="btn btn-info"> Analitics </button>
                     <button class="btn btn-info"> Notifications <span class="badge bg-danger">4</span> </button>
                 </div>
             </div>
         </header>
 
         {% block body %}
-        {% end block %}
+        {% endblock %}
     </body>
 </html>

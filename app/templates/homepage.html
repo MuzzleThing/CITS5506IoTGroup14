@@ -1,0 +1,80 @@
+{% extends 'basic_template.html' %}
+{% block head %}
+    <title>
+        SFIMS-HomePage
+    </title>
+{% endblock %}
+
+{% block body %}
+    <div class="row wholeContent">
+        <div class="col-5 itemsContainer">
+            <div class="row row-cols-2 itemsGrid">
+                {% for item in items[:4] %}
+                    <div class="col itemContainer">
+                        <!-- TODO: image? -->
+                        <!-- TODO: delete? -->
+                        <h3 class="d-inline">Food Name: </h3> {{ item.name }} <br>
+                        <h3 class="d-inline">Quantity: </h3> {{ item.quantity }} <br>
+                        <h3 class="d-inline">Date: </h3> {{ item.date }} <br>
+                        <h3 class="d-inline">Expiry Date: </h3> {{ item.expiry_date }} <br>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-2 bg-secondary pt-5" id="homepageInputContainer">
+            <form action="{{ url_for('openHomepage') }}" method="POST">
+                {{ form.hidden_tag() }}
+                <h3> Record New Food </h3>
+                <br>
+
+                <label class="form-label"> Food Name </label><br>
+                {{ form.name(class="form-control") }}
+                <br><br>
+
+                <label class="form-label"> Quantity </label><br>
+                {{ form.quantity(class="form-control") }}
+                <br><br>
+
+                <label class="form-label"> Date </label><br>
+                {{ form.date(class="form-control") }}
+                <br><br>
+
+                <label class="form-label"> Expiry Date (Optional) </label><br>
+                {{ form.expiryDate(class="form-control") }}
+                <br><br>
+
+                <input type="submit" class="btn btn-success" value="Submit">
+            </form>
+
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <div>
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="col-5 itemsContainer">
+            <div class="row row-cols-2 itemsGrid">
+                {% for item in items[4:] %}
+                    <div class="col itemContainer">
+                        
+                        <!-- TODO: image? -->
+                        <h3 class="d-inline">Food Name: </h3> {{ item.name }} <br>
+                        <h3 class="d-inline">Quantity: </h3> {{ item.quantity }} <br>
+                        <h3 class="d-inline">Date: </h3> {{ item.date }} <br>
+                        <h3 class="d-inline">Expiry Date: </h3> {{ item.expiry_date }} <br>
+                        
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

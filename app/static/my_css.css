@@ -11,7 +11,38 @@ body {
     /* width: 20rem; */
 }
 
+.wholeContent {
+    height: 100%;
+}
+
+/* .itemsContainer {
+    height: 100%;
+} */
+
+.itemsGrid {
+    /* background-color: red; */
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.itemContainer {
+    /* height: 50%; */
+    height: 40%;
+    width: 40%;
+    margin: 5%;
+    background-color: green;
+    text-align: center;
+    border-radius: 15px;
+}
+
 #topBar {
     display: flex;
     flex-direction: row;
+}
+
+#homepageInputContainer {
+    color: antiquewhite;
 }
