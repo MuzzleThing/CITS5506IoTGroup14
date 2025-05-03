@@ -6,13 +6,33 @@ body {
 }
 
 .btn {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Creates a shadow below the element */
+}
+
+
+.linkBtn {
     height: 3rem;
     margin: 0.5rem 1rem;
-    /* width: 20rem; */
+    border-radius: 5rem;
+    width: 10rem;
+}
+
+/* .btn-group > .btn {
+    width: 15vw;
+} */
+
+.active {
+    background-color: limegreen !important;
+    color: limegreen;
 }
 
 .wholeContent {
     height: 100%;
+    background-color: aliceblue;
+    /* background-image: url(../static/images/white-grungy-wall-textured-background.jpg); */
+    /* display: flex;
+    align-items: center; */
+    
 }
 
 /* .itemsContainer {
@@ -26,6 +46,7 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
+
 }
 
 .itemContainer {
@@ -33,16 +54,44 @@ body {
     height: 40%;
     width: 40%;
     margin: 5%;
-    background-color: green;
-    text-align: center;
+    /* text-align: center; */
     border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Creates a shadow below the element */
 }
 
-#topBar {
+.icon {
+    height: 30%;
+    /* margin: 0 auto;
+    display: block; */
+    margin-bottom: 1rem;
+}
+
+.orderBtn {
+    height: 70%;
     display: flex;
-    flex-direction: row;
+    align-items: center;
 }
 
 #homepageInputContainer {
-    color: antiquewhite;
+    background-color: honeydew;
+    height: 80%;
+    border-radius: 5rem;
+    margin: 2% 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Creates a shadow below the element */
 }
+
+
+#topBar {
+    padding: 0.5rem 0;
+    background-color: honeydew;
+}
+
+#orderBtnGroup {
+    display: flex;
+    align-items: center;
+}
+

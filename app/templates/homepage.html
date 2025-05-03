@@ -5,24 +5,40 @@
     </title>
 {% endblock %}
 
+{% block navBar %}
+    <div class="btn-group ms-auto" id="orderBtnGroup">
+        <a class="btn orderBtn btn-primary {% if order == 'newest' %}active{% endif %}" href="{{ url_for('openHomepage', order='newest') }}"> Newest Items </a>
+        <a class="btn orderBtn btn-primary {% if order == 'oldest' %}active{% endif %}" href="{{ url_for('openHomepage', order='oldest') }}"> Oldest Items </a>
+        <a class="btn orderBtn btn-primary {% if order == 'expiring' %}active{% endif %}" href="{{ url_for('openHomepage', order='expiring') }}"> Expiring Items </a>
+    </div>
+{% endblock %} 
+
+
 {% block body %}
     <div class="row wholeContent">
         <div class="col-5 itemsContainer">
             <div class="row row-cols-2 itemsGrid">
                 {% for item in items[:4] %}
-                    <div class="col itemContainer">
+                    <div class="col itemContainer
+                    {% if (item.expiry_date - currentDate).days <= 1 %} bg-danger
+                    {% elif (item.expiry_date - currentDate).days <= 3 %} bg-warning 
+                    {% else %} bg-success
+                    {% endif %}">
+                        <img class="rounded-circle icon" src="../static/images/watermelon.jpeg" alt="watermelonImage">
                         <!-- TODO: image? -->
                         <!-- TODO: delete? -->
-                        <h3 class="d-inline">Food Name: </h3> {{ item.name }} <br>
-                        <h3 class="d-inline">Quantity: </h3> {{ item.quantity }} <br>
-                        <h3 class="d-inline">Date: </h3> {{ item.date }} <br>
-                        <h3 class="d-inline">Expiry Date: </h3> {{ item.expiry_date }} <br>
+                        <div class="container attributeContainer">
+                            <h5 class="d-inline">Food Name: </h5> {{ item.name }} <br>
+                            <h5 class="d-inline">Quantity: </h5> {{ item.quantity }} <br>
+                            <h5 class="d-inline">Date: </h5> {{ item.date }} <br>
+                            <h5 class="d-inline">Expiry Date: </h5> {{ item.expiry_date }} <br>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="col-2 bg-secondary pt-5" id="homepageInputContainer">
+        <div class="col-2 pt-5 border-start border-end border-2 border-secondary" id="homepageInputContainer">
             <form action="{{ url_for('openHomepage') }}" method="POST">
                 {{ form.hidden_tag() }}
                 <h3> Record New Food </h3>
@@ -30,19 +46,19 @@
 
                 <label class="form-label"> Food Name </label><br>
                 {{ form.name(class="form-control") }}
-                <br><br>
+                <br>
 
                 <label class="form-label"> Quantity </label><br>
                 {{ form.quantity(class="form-control") }}
-                <br><br>
+                <br>
 
                 <label class="form-label"> Date </label><br>
                 {{ form.date(class="form-control") }}
-                <br><br>
+                <br>
 
                 <label class="form-label"> Expiry Date (Optional) </label><br>
                 {{ form.expiryDate(class="form-control") }}
-                <br><br>
+                <br>
 
                 <input type="submit" class="btn btn-success" value="Submit">
             </form>
@@ -64,14 +80,20 @@
         <div class="col-5 itemsContainer">
             <div class="row row-cols-2 itemsGrid">
                 {% for item in items[4:] %}
-                    <div class="col itemContainer">
-                        
+                    <div class="col itemContainer
+                    {% if (item.expiry_date - currentDate).days <= 1 %} bg-danger
+                    {% elif (item.expiry_date - currentDate).days <= 3 %} bg-warning 
+                    {% else %} bg-success
+                    {% endif %}">
+                        <img class="rounded-circle icon" src="../static/images/watermelon.jpeg" alt="watermelonImage">
                         <!-- TODO: image? -->
-                        <h3 class="d-inline">Food Name: </h3> {{ item.name }} <br>
-                        <h3 class="d-inline">Quantity: </h3> {{ item.quantity }} <br>
-                        <h3 class="d-inline">Date: </h3> {{ item.date }} <br>
-                        <h3 class="d-inline">Expiry Date: </h3> {{ item.expiry_date }} <br>
-                        
+                        <!-- TODO: delete? -->
+                        <div class="container attributeContainer">
+                            <h5 class="d-inline">Food Name: </h5> {{ item.name }} <br>
+                            <h5 class="d-inline">Quantity: </h5> {{ item.quantity }} <br>
+                            <h5 class="d-inline">Date: </h5> {{ item.date }} <br>
+                            <h5 class="d-inline">Expiry Date: </h5> {{ item.expiry_date }} <br>
+                        </div>
                     </div>
                 {% endfor %}
             </div>

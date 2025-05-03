@@ -6,20 +6,27 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="../static/bootstrap.min.css">
         <link rel="stylesheet" href="../static/my_css.css">
-        <script src="../static/bootstrap.bundle.min.js" async defer></script>
+        <script src="../static/bootstrap.bundle.min.js" defer></script>
         {% block head %}
         {% endblock %}
     </head>
     <body>
-        <header class="bg-secondary" id="topBar">
+        <header class="border-bottom border-2 border-secondary" id="topBar">
             
             <div>
                 <!-- <h3>Smart Food Inventory Management System: {{currentPage}}</h3> -->
-                <div class="btn-group">
-                    <button class="btn btn-info"> Home </button>
-                    <button class="btn btn-info"> Inventory </button>
-                    <button class="btn btn-info"> Analitics </button>
-                    <button class="btn btn-info"> Notifications <span class="badge bg-danger">4</span> </button>
+                <div class="d-flex">
+                    <div class="btn-group">
+                        <!-- TODO: urls -->
+                        <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
+                            Notifications <span class="badge bg-danger">4</span>
+                        </a>
+                    </div>
+                    {% block navBar %}
+                    {% endblock %} 
                 </div>
             </div>
         </header>
