@@ -7,6 +7,23 @@
         <link rel="stylesheet" href="../static/bootstrap.min.css">
         <link rel="stylesheet" href="../static/my_css.css">
         <script src="../static/bootstrap.bundle.min.js" defer></script>
+        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+        <!-- <script>
+            // Connect to the WebSocket server
+            const socket = io();
+
+            socket.on('connect', function() {
+                console.log('WebSocket connected');
+            });
+
+            // Listen for the 'reload_homepage' event
+            socket.on('reload_page', function(data) {
+                console.log(data.message); // Log the message for debugging
+                console.log('Reloading page...');
+                location.reload(); // Reload the page
+                console.log('Reloading Complete!')
+            });
+        </script> -->
         {% block head %}
         {% endblock %}
     </head>

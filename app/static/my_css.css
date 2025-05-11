@@ -1,5 +1,5 @@
 body {
-    background-image: url("white-grungy-wall-textured-background.jpg");
+    /* background-image: url("white-grungy-wall-textured-background.jpg"); */
     width: 100vw;
     height: 100vh;
     overflow: hidden;
@@ -64,7 +64,7 @@ body {
 }
 
 .icon {
-    height: 30%;
+    height: 5rem;
     /* margin: 0 auto;
     display: block; */
     margin-bottom: 1rem;
