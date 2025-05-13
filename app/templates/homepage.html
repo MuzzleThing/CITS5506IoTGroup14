@@ -4,21 +4,26 @@
         SFIMS-HomePage
     </title>
     <script>
-            // Connect to the WebSocket server
-            const socket = io();
+        // Connect to the WebSocket server
+        const socket = io();
 
-            socket.on('connect', function() {
-                console.log('WebSocket connected');
-            });
+        socket.on('connect', function() {
+            console.log('WebSocket connected');
+        });
 
-            // Listen for the 'reload_homepage' event
-            socket.on('reload_page', function(data) {
-                console.log(data.message); // Log the message for debugging
-                console.log('Reloading page...');
-                location.reload(); // Reload the page
-                console.log('Reloading Complete!')
-            });
-        </script>
+        // Listen for the 'reload_homepage' event
+        socket.on('reload_page', function(data) {
+            console.log(data.message); // Log the message for debugging
+            console.log('Reloading page...');
+            location.reload(); // Reload the page
+            //window.location.href = window.location.href.split('?')[0] + '?reload=' + new Date().getTime();
+            console.log('Reloading Complete!')
+        });
+
+        socket.onAny((event, ...args) => {
+            console.log(`Received event: ${event}`, args);
+        });
+    </script>
 {% endblock %}
 
 {% block navBar %}
@@ -77,6 +82,10 @@
                 <label class="form-label"> Expiry Date (Optional) </label><br>
                 {{ form.expiryDate(class="form-control") }}
                 <br>
+                
+                <div id="reloadTimestamp">
+                    Page last loaded at: {{ currentDate }} {{ currentTime }}
+                </div>
 
                 <input type="submit" class="btn btn-success" value="Submit">
             </form>

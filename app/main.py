@@ -2,7 +2,7 @@ from app import app, socketio, db
 from flask import render_template, redirect, url_for, flash, request
 from app.forms import HomePageForm
 from app.models import Item
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from sqlalchemy import select,desc
 import threading
 import urllib.request
@@ -12,53 +12,103 @@ import os
 APIKey = "x8hfpalze3rcc8h1idminp3nwnjgmh" # The API key of a free trial account on BarcodeLookup.com
 # In total there is 50 calls available, don't squander them
 
+keyboardInput = ""
+
+def listenToKeyboard():
+    global keyboardInput
+    while True:
+        keyboardInput = input("You can scan an item or type a barcode here:")
+        print(keyboardInput)
+
 # Function to handle barcode scanning in a separate thread
 def listen_to_barcode_scanner():
+    global keyboardInput
     while True:
-        try:
-            with app.app_context():
-                # Prompt for barcode input
-                barcode = input("Please scan the barcode: ")
-                
-                # Construct the API URL
-                url = f"https://api.barcodelookup.com/v3/products?barcode={barcode}&formatted=y&key={APIKey}"
-                
-                # Make the API request
-                with urllib.request.urlopen(url) as url_response:
-                    data = json.loads(url_response.read().decode())
-                
-                itemName = data["products"][0]["title"]
+        socketio.sleep(1)
+        if keyboardInput != "":
+            try:
+                with app.app_context():
+                    # Prompt for barcode input
+                    barcode = keyboardInput
+                    
+                    # Construct the API URL
+                    url = f"https://api.barcodelookup.com/v3/products?barcode={barcode}&formatted=y&key={APIKey}"
+                    
+                    # Make the API request
+                    with urllib.request.urlopen(url) as url_response:
+                        data = json.loads(url_response.read().decode())
+                    
+                    itemName = data["products"][0]["title"]
 
-                # Store the scanned item into the database
-                item = Item (name=itemName, quantity=1, date=date.today(), expiry_date=date.today()+timedelta(weeks=4))
-                # Defaulf date is set to current day and expiry date is 4 weeks later
-                db.session.add(item)
-                db.session.commit()
+                    # Store the scanned item into the database
+                    item = Item (name=itemName, quantity=1, date=date.today(), expiry_date=date.today()+timedelta(weeks=4))
+                    # Defaulf date is set to current day and expiry date is 4 weeks later
+                    db.session.add(item)
+                    db.session.commit()
 
-                # Ensure the directory exists
-                image_directory = "app/static/images"
-                os.makedirs(image_directory, exist_ok=True)  # Create the directory if it doesn't exist
+                    # Ensure the directory exists
+                    image_directory = "app/static/images"
+                    os.makedirs(image_directory, exist_ok=True)  # Create the directory if it doesn't exist
 
-                # Download the image for the scanned item
-                image_filename = f"{itemName}.jpg"  # Save the image with the barcode as the filename
-                image_path = os.path.join(image_directory, image_filename)  # Save to the static/images directory
-                if not os.path.exists(image_path):  # Check if the file already exists
-                    image_url = data["products"][0]["images"][0]  # Get the first image URL
-                    urllib.request.urlretrieve(image_url, image_path)
-                    print(f"Image downloaded and saved to {image_path}")
-                else:
-                    print(f"Image already exists at {image_path}, skipping download.")
+                    # Download the image for the scanned item
+                    image_filename = f"{itemName}.jpg"  # Save the image with the barcode as the filename
+                    image_path = os.path.join(image_directory, image_filename)  # Save to the static/images directory
+                    if not os.path.exists(image_path):  # Check if the file already exists
+                        image_url = data["products"][0]["images"][0]  # Get the first image URL
+                        urllib.request.urlretrieve(image_url, image_path)
+                        print(f"Image downloaded and saved to {image_path}")
+                    else:
+                        print(f"Image already exists at {image_path}, skipping download.")
 
-                # Emit a WebSocket event to notify clients
-                # When a item is scanned and stored into database, every currently opened page should reload
-                print("Preparing to emit reload_page event...")
-                socketio.emit('reload_page', {'message': 'A new item has been scanned!'}, include_self=True)
-                print("Page reload event emitted.")
-        
-        except Exception as e:
-            print(f"Error processing barcode: {e}")
+                    # Emit a WebSocket event to notify clients
+                    # When a item is scanned and stored into database, every currently opened page should reload
+                    print("Preparing to emit reload_page event...")
+                    socketio.emit('reload_page', {'message': 'A new item has been scanned!'}, include_self=True)
+                    print("Page reload event emitted.")
+            
+            except Exception as e:
+                print(f"Error processing barcode: {e}")
+            keyboardInput = ""
 
 # Routes and view functions start here
+
+# Function to listen for "refresh" command in the terminal
+def listen_for_refresh_command():
+    print("listen_for_refresh_command started")
+    global keyboardInput
+    # command = keyboardInput
+    while True:
+        try:
+            # command = input("Type 'refresh' to reload the page: ").strip().lower()
+            if keyboardInput == "refresh":
+                print("Refresh command received. Reloading page...")
+                # with app.app_context():  # Ensure the correct app context
+                socketio.emit('reload_page', {'message': 'Page refresh triggered!'}, include_self=True)
+                print("Page reload event emitted.")
+                keyboardInput = ""
+            # print("sleeping")
+            socketio.sleep(0.1)
+
+        except Exception as e:
+            print(f"Error in refresh command listener: {e}")
+
+def test_background_task():
+    try:
+        while True:
+            print("Test background task running...")
+            socketio.sleep(1)
+    except Exception as e:
+        print(f"Error in test_background_task: {e}")
+
+@socketio.on('connect')
+def handleConnect():
+    print("Client connected")
+
+@app.route('/test_reload')
+def test_reload():
+    print("Emitting test reload_page event...")
+    socketio.emit('reload_page', {'message': 'Test reload triggered!'}, include_self=True)
+    return "Test reload event emitted"
 
 @app.get('/')
 def openHomepage():
@@ -77,9 +127,11 @@ def openHomepage():
     for item in items:
         image_path = os.path.join("app/static/images", f"{item.name}.jpg")
         item.has_image = os.path.exists(image_path)
+
+    currentTime = datetime.now()
         
     currentDate = date.today()
-    return render_template('homepage.html', form=form, items=items, currentPage='homepage', currentDate=currentDate, order=order)
+    return render_template('homepage.html', form=form, items=items, currentPage='homepage', currentDate=currentDate, currentTime=currentTime ,order=order)
 
 @app.post('/')
 def recordItem():
@@ -99,7 +151,18 @@ def recordItem():
 
 
 if __name__ == '__main__': # Run the server by command line: python -m app.main
-    barcode_thread = threading.Thread(target=listen_to_barcode_scanner, daemon=True)
-    barcode_thread.start()  # Start the thread to listen for barcode input
-    socketio.run(app, debug=True) 
+    # barcode_thread = threading.Thread(target=listen_to_barcode_scanner, daemon=True)
+    # barcode_thread.start()  # Start the thread to listen for barcode input
+    socketio.start_background_task(listen_to_barcode_scanner)
+
+    # refresh_thread = threading.Thread(target=listen_for_refresh_command, daemon=True)
+    # refresh_thread.start()  # Start the thread to listen for "refresh" command
+    keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
+    keyboardInputThread.start()
+    # # socketio.start_background_task(listen_for_refresh_command)
+    # print("Starting background tasks...")
+    # socketio.start_background_task(test_background_task)
+    # print("Background task for test_background_task started")
+    socketio.run(app, debug=False)
     # Format to specify IP and port: socketio.run(app, host="0.0.0.0", port=5000, debug = True)
+    # the address is http://127.0.0.1:5000
