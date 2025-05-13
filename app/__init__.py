@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'amber_pearl_latte_is_the_best'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet')
 
 db = SQLAlchemy()
 migrate = Migrate()
