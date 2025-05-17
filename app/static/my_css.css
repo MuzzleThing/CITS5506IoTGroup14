@@ -14,12 +14,9 @@ body {
     height: 3rem;
     margin: 0.5rem 1rem;
     border-radius: 5rem;
-    width: 10rem;
+    max-width: 10rem;
+    /* width: 10rem; */
 }
-
-/* .btn-group > .btn {
-    width: 15vw;
-} */
 
 .active {
     background-color: limegreen !important;
@@ -42,6 +39,7 @@ body {
 .itemsGrid {
     /* background-color: red; */
     height: 90%;
+    /* height: auto; */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -52,7 +50,7 @@ body {
 .itemContainer {
     /* height: 50%; */
     height: 40%;
-    width: 40%;
+    width: 40%; 
     margin: 5%;
     /* text-align: center; */
     border-radius: 15px;
@@ -71,9 +69,11 @@ body {
 }
 
 .orderBtn {
-    height: 70%;
+    /* height: 70%; */
+    /* width: 10rem; */
     display: flex;
     align-items: center;
+    text-align: center;
 }
 
 #homepageInputContainer {
@@ -95,3 +95,10 @@ body {
     align-items: center;
 }
 
+@media (max-width: 600px) {
+    .itemContainer {
+        height: 40%;
+        width: 100%;
+        margin: 0 0 1rem 0;
+    }
+}

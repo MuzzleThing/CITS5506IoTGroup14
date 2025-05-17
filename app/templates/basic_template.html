@@ -7,8 +7,51 @@
         <link rel="stylesheet" href="../static/bootstrap.min.css">
         <link rel="stylesheet" href="../static/my_css.css">
         <script src="../static/bootstrap.bundle.min.js" defer></script>
+        {% block head %}
+        {% endblock %}
+    </head>
+    <body>
+        <header class="border-bottom border-2 border-secondary" id="topBar">
+            
+            <div>
+                <!-- <h3>Smart Food Inventory Management System: {{currentPage}}</h3> -->
+                <div class="d-flex">
+                    <!-- <div class="btn-group">
+                        <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a>
+                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
+                            Notifications <span class="badge bg-danger">4</span>
+                        </a>
+                    </div> -->
+                    <nav class="navbar navbar-expand-lg navbar-light bg-light w-100">
+                        <div class="container-fluid p-0">
+                            <!-- <a class="navbar-brand" href="#"> SFIMS</a> -->
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="collapse navbar-collapse" id="mainNavbar">
+                                <div class="btn-group w-100">
+                                    <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
+                                    <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
+                                    <!-- <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a> -->
+                                    <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
+                                        Notifications <span class="badge bg-danger">4</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                    {% block navBar %}
+                    {% endblock %} 
+                </div>
+            </div>
+        </header>
+
+        {% block body %}
+        {% endblock %}
         <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-        <!-- <script>
+        <script>
             // Connect to the WebSocket server
             const socket = io();
 
@@ -21,34 +64,18 @@
                 console.log(data.message); // Log the message for debugging
                 console.log('Reloading page...');
                 location.reload(); // Reload the page
+                //window.location.href = window.location.href.split('?')[0] + '?reload=' + new Date().getTime();
                 console.log('Reloading Complete!')
             });
-        </script> -->
-        {% block head %}
-        {% endblock %}
-    </head>
-    <body>
-        <header class="border-bottom border-2 border-secondary" id="topBar">
-            
-            <div>
-                <!-- <h3>Smart Food Inventory Management System: {{currentPage}}</h3> -->
-                <div class="d-flex">
-                    <div class="btn-group">
-                        <!-- TODO: urls -->
-                        <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
-                            Notifications <span class="badge bg-danger">4</span>
-                        </a>
-                    </div>
-                    {% block navBar %}
-                    {% endblock %} 
-                </div>
-            </div>
-        </header>
 
-        {% block body %}
-        {% endblock %}
+            socket.onAny((event, ...args) => {
+                console.log(`Received event: ${event}`, args);
+            });
+
+            socket.on("itemNotFound", function(data){
+                console.log(data.message)
+                alert(data.message)
+            });
+        </script>
     </body>
 </html>
