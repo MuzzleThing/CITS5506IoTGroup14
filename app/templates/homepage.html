@@ -3,52 +3,30 @@
     <title>
         SFIMS-HomePage
     </title>
-    <script>
-        // Connect to the WebSocket server
-        const socket = io();
-
-        socket.on('connect', function() {
-            console.log('WebSocket connected');
-        });
-
-        // Listen for the 'reload_homepage' event
-        socket.on('reload_page', function(data) {
-            console.log(data.message); // Log the message for debugging
-            console.log('Reloading page...');
-            location.reload(); // Reload the page
-            //window.location.href = window.location.href.split('?')[0] + '?reload=' + new Date().getTime();
-            console.log('Reloading Complete!')
-        });
-
-        socket.onAny((event, ...args) => {
-            console.log(`Received event: ${event}`, args);
-        });
-    </script>
 {% endblock %}
 
 {% block navBar %}
     <div class="btn-group ms-auto" id="orderBtnGroup">
         <a class="btn orderBtn btn-primary {% if order == 'newest' %}active{% endif %}" href="{{ url_for('openHomepage', order='newest') }}"> Newest Items </a>
         <a class="btn orderBtn btn-primary {% if order == 'oldest' %}active{% endif %}" href="{{ url_for('openHomepage', order='oldest') }}"> Oldest Items </a>
-        <a class="btn orderBtn btn-primary {% if order == 'expiring' %}active{% endif %}" href="{{ url_for('openHomepage', order='expiring') }}"> Items Nearest Expiry</a>
+        <a class="btn orderBtn btn-primary {% if order == 'expiring' %}active{% endif %}" href="{{ url_for('openHomepage', order='expiring') }}"> Nearest Expiry</a>
     </div>
 {% endblock %} 
 
 
 {% block body %}
     <div class="row wholeContent">
-        <div class="col-5 itemsContainer">
-            <div class="row row-cols-2 itemsGrid">
+        <div class="col-6 col-lg-5 itemsContainer">
+            <div class="row row-cols-1 row-cols-lg-2 itemsGrid">
                 {% for item in items[:4] %}
                     <div class="col itemContainer
                     {% if (item.expiry_date - currentDate).days <= 1 %} bg-danger
                     {% elif (item.expiry_date - currentDate).days <= 3 %} bg-warning 
                     {% else %} bg-success
                     {% endif %}">
-                        <img class="rounded-circle icon" 
+                        <img class="rounded icon" 
                             src="{% if item.has_image %}{{ url_for('static', filename='images/' + item.name + '.jpg') }}{% else %}../static/images/watermelon.jpeg{% endif %}" 
                             alt="{{ item.name }}">
-                        <!-- TODO: image? -->
                         <!-- TODO: delete? -->
                         <div class="container attributeContainer">
                             <h5 class="d-inline">Food Name: </h5> {{ item.name }} <br>
@@ -61,7 +39,7 @@
             </div>
         </div>
 
-        <div class="col-2 pt-5 border-start border-end border-2 border-secondary" id="homepageInputContainer">
+        <div class="col-6 col-lg-2 pt-5 border-start border-end border-2 border-secondary" id="homepageInputContainer">
             <form action="{{ url_for('openHomepage') }}" method="POST">
                 {{ form.hidden_tag() }}
                 <h3> Record New Food </h3>
@@ -83,9 +61,10 @@
                 {{ form.expiryDate(class="form-control") }}
                 <br>
                 
-                <div id="reloadTimestamp">
+                <!-- <div id="reloadTimestamp">
                     Page last loaded at: {{ currentDate }} {{ currentTime }}
-                </div>
+                </div> -->
+                
 
                 <input type="submit" class="btn btn-success" value="Submit">
             </form>
@@ -104,19 +83,17 @@
             {% endwith %}
         </div>
 
-        <div class="col-5 itemsContainer">
-            <div class="row row-cols-2 itemsGrid">
+        <div class="col-5 itemsContainer d-none d-lg-block">
+            <div class="row row-cols-1 row-cols-lg-2 itemsGrid">
                 {% for item in items[4:] %}
                     <div class="col itemContainer
                     {% if (item.expiry_date - currentDate).days <= 1 %} bg-danger
                     {% elif (item.expiry_date - currentDate).days <= 3 %} bg-warning 
                     {% else %} bg-success
                     {% endif %}">
-                        <img class="rounded-circle icon" 
+                        <img class="rounded icon" 
                             src="{% if item.has_image %}{{ url_for('static', filename='images/' + item.name + '.jpg') }}{% else %}../static/images/watermelon.jpeg{% endif %}" 
                             alt="{{ item.name }}">
-                        <!-- TODO: image? -->
-                        <!-- TODO: delete? -->
                         <div class="container attributeContainer">
                             <h5 class="d-inline">Food Name: </h5> {{ item.name }} <br>
                             <h5 class="d-inline">Quantity: </h5> {{ item.quantity }} <br>
@@ -128,4 +105,31 @@
             </div>
         </div>
     </div>
+
+    <!-- This script hides order button groups when the collapsed navbar is shown -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var navbarCollapse = document.getElementById('mainNavbar');
+            var customNavBarBlock = document.getElementById('orderBtnGroup');
+            if (navbarCollapse && customNavBarBlock) {
+                navbarCollapse.addEventListener('show.bs.collapse', function () {
+                    customNavBarBlock.style.display = 'none';
+                });
+                navbarCollapse.addEventListener('hide.bs.collapse', function () {
+                    customNavBarBlock.style.display = '';
+                });
+            }
+        });
+    </script>
+
+    <!-- This script hides the items after item 2 when on small screens. -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth < 600) { // Bootstrap's lg breakpoint
+                document.querySelectorAll('.itemsGrid .itemContainer').forEach(function(el, idx) {
+                    if (idx > 1) el.style.display = 'none';
+                });
+            }
+        });
+    </script>
 {% endblock %}

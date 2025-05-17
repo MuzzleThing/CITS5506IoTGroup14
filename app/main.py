@@ -18,25 +18,40 @@ def listenToKeyboard():
     global keyboardInput
     while True:
         keyboardInput = input("You can scan an item or type a barcode here:")
-        print(keyboardInput)
 
 # Function to handle barcode scanning in a separate thread
 def listen_to_barcode_scanner():
     global keyboardInput
     while True:
-        socketio.sleep(1)
+        socketio.sleep(0.3)
         if keyboardInput != "":
             try:
                 with app.app_context():
                     # Prompt for barcode input
                     barcode = keyboardInput
+                    # print(f"barcode is {barcode}")
                     
                     # Construct the API URL
                     url = f"https://api.barcodelookup.com/v3/products?barcode={barcode}&formatted=y&key={APIKey}"
+                    # print("url is made")
                     
                     # Make the API request
-                    with urllib.request.urlopen(url) as url_response:
-                        data = json.loads(url_response.read().decode())
+                    try:
+                        with urllib.request.urlopen(url) as url_response:
+                            data = json.loads(url_response.read().decode())
+                            print("data retrived???")
+                    except urllib.error.HTTPError as e:
+                        if e.code == 404:
+                            print(f"No entry found for barcode {barcode}.")
+                            socketio.emit("itemNotFound", {"message": "The item which you scanned is not yet included in Barcode Lookup Database!\nPlease record this item manually."})
+                        else:
+                            print(f"HTTP error occurred: {e}")
+                        keyboardInput = ""
+                        continue
+                    except Exception as e:
+                        print(f"Error retrieving data: {e}")
+                        keyboardInput = ""
+                        continue
                     
                     itemName = data["products"][0]["title"]
 
@@ -151,18 +166,12 @@ def recordItem():
 
 
 if __name__ == '__main__': # Run the server by command line: python -m app.main
-    # barcode_thread = threading.Thread(target=listen_to_barcode_scanner, daemon=True)
-    # barcode_thread.start()  # Start the thread to listen for barcode input
+
     socketio.start_background_task(listen_to_barcode_scanner)
 
-    # refresh_thread = threading.Thread(target=listen_for_refresh_command, daemon=True)
-    # refresh_thread.start()  # Start the thread to listen for "refresh" command
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
-    # # socketio.start_background_task(listen_for_refresh_command)
-    # print("Starting background tasks...")
-    # socketio.start_background_task(test_background_task)
-    # print("Background task for test_background_task started")
-    socketio.run(app, debug=False)
+
+    socketio.run(app, debug=True) 
     # Format to specify IP and port: socketio.run(app, host="0.0.0.0", port=5000, debug = True)
     # the address is http://127.0.0.1:5000
