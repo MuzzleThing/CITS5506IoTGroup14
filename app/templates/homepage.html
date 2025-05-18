@@ -40,7 +40,7 @@
         </div>
 
         <div class="col-6 col-lg-2 pt-5 border-start border-end border-2 border-secondary" id="homepageInputContainer">
-            <form action="{{ url_for('openHomepage') }}" method="POST">
+            <form action="{{ url_for('editItem') }}" method="POST">
                 {{ form.hidden_tag() }}
                 <h3> Record New Food </h3>
                 <br>
@@ -60,12 +60,7 @@
                 <label class="form-label"> Expiry Date (Optional) </label><br>
                 {{ form.expiryDate(class="form-control") }}
                 <br>
-                
-                <!-- <div id="reloadTimestamp">
-                    Page last loaded at: {{ currentDate }} {{ currentTime }}
-                </div> -->
-                
-
+ 
                 <input type="submit" class="btn btn-success" value="Submit">
             </form>
 
@@ -125,7 +120,7 @@
     <!-- This script hides the items after item 2 when on small screens. -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.innerWidth < 600) { // Bootstrap's lg breakpoint
+            if (window.innerWidth < 600) {
                 document.querySelectorAll('.itemsGrid .itemContainer').forEach(function(el, idx) {
                     if (idx > 1) el.style.display = 'none';
                 });

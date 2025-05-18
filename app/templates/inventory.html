@@ -1,0 +1,173 @@
+{% extends 'basic_template.html' %}
+{% block head %}
+    <title>
+        SFIMS-Inventory
+    </title>
+{% endblock %}
+
+{% block navBar %}
+    <div class="btn-group ms-auto" id="orderBtnGroup">
+        <a class="btn orderBtn btn-primary {% if order == 'newest' %}active{% endif %}" href="{{ url_for('openInventory', order='newest') }}"> Newest Items </a>
+        <a class="btn orderBtn btn-primary {% if order == 'oldest' %}active{% endif %}" href="{{ url_for('openInventory', order='oldest') }}"> Oldest Items </a>
+        <a class="btn orderBtn btn-primary {% if order == 'expiring' %}active{% endif %}" href="{{ url_for('openInventory', order='expiring') }}"> Nearest Expiry</a>
+    </div>
+    
+{% endblock %} 
+
+{% block body %}
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <div class="table-responsive" id="responsiveTable">
+        <table class="table scrollable">
+            <thead class="sticky-top">
+                <tr>
+                    <th>Item Name</th>
+                    <th>Item Quantity</th>
+                    <th>Date</th>
+                    <th>Expiry Date</th>
+                    <th>Edit Item</th>
+                    <th>Delete Item</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr class="{% if (item.expiry_date - currentDate).days <= 1 %} table-danger
+                        {% elif (item.expiry_date - currentDate).days <= 3 %} table-warning 
+                        {% else %} table-success
+                        {% endif %}">
+                        <td> {{ item.name }} </td>
+                        <td> {{ item.quantity }} </td>
+                        <td> {{ item.date }} </td>
+                        <td> {{ item.expiry_date }} </td>
+                        <td>
+                            <button type="button" class="btn btn-primary edit-btn"
+                                data-id="{{ item.id }}"
+                                data-name="{{ item.name }}"
+                                data-quantity="{{ item.quantity }}"
+                                data-date="{{ item.date }}"
+                                data-expiry="{{ item.expiry_date }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#myModal"> Edit 
+                            </button>
+                        </td>
+                        <td><a class="btn btn-danger" href="{{ url_for('deleteItem', id=item.id)}}">Delete</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- The Modal -->
+        <div class="modal" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit Item</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <form action="{{ url_for('openHomepage') }}" method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <label class="form-label"> Food Name </label><br>
+                        {{ form.name(class="form-control", id="modalName") }}
+                        <br>
+
+                        <label class="form-label"> Quantity </label><br>
+                        {{ form.quantity(class="form-control", id="modalQuantity") }}
+                        <br>
+
+                        <label class="form-label"> Date </label><br>
+                        {{ form.date(class="form-control", id="modalDate") }}
+                        <br>
+
+                        <label class="form-label"> Expiry Date (Optional) </label><br>
+                        {{ form.expiryDate(class="form-control", id="modalExpiryDate") }}
+                        <br>
+        
+                        <div class="d-flex">
+                            <input type="submit" class="btn btn-success me-2" value="Submit">
+                            <button type="button" class="btn btn-danger ms-auto" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal footer -->
+                <!-- <div class="modal-footer">
+                    
+                </div> -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- This script adjust the height of the table corresponding the variation of top bar -->
+    <script>
+        function adjustTableHeight() {
+            var navbar = document.getElementById('topBar');
+            var table = document.getElementById('responsiveTable');
+            if (navbar && table) {
+                var navbarHeight = navbar.offsetHeight;
+                var vh = window.innerHeight;
+                table.style.height = (vh - navbarHeight) + 'px';
+            }
+        }
+
+        // Adjust on load and when window is resized
+        window.addEventListener('DOMContentLoaded', adjustTableHeight);
+        window.addEventListener('resize', adjustTableHeight);
+
+        // If your navbar can expand/collapse, listen for Bootstrap's collapse events:
+        var mainNavbar = document.getElementById('mainNavbar');
+        if (mainNavbar) {
+            mainNavbar.addEventListener('shown.bs.collapse', adjustTableHeight);
+            mainNavbar.addEventListener('hidden.bs.collapse', adjustTableHeight);
+        }
+    </script>
+
+    <!-- This script hides order button groups when the collapsed navbar is shown -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var navbarCollapse = document.getElementById('mainNavbar');
+            var customNavBarBlock = document.getElementById('orderBtnGroup');
+            if (navbarCollapse && customNavBarBlock) {
+                navbarCollapse.addEventListener('show.bs.collapse', function () {
+                    customNavBarBlock.style.display = 'none';
+                });
+                navbarCollapse.addEventListener('hide.bs.collapse', function () {
+                    customNavBarBlock.style.display = '';
+                });
+            }
+        });
+    </script>
+
+    <!-- This script automatically fill the form with the info from the row which the user have clicked -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.edit-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('modalName').value = btn.getAttribute('data-name');
+                    document.getElementById('modalQuantity').value = btn.getAttribute('data-quantity');
+                    document.getElementById('modalDate').value = btn.getAttribute('data-date');
+                    document.getElementById('modalExpiryDate').value = btn.getAttribute('data-expiry');
+                    // Update the form action with the item's id
+                    document.querySelector('#myModal form').action = "{{ url_for('editItem') }}?id=" + btn.getAttribute('data-id');
+                });
+            });
+        });
+    </script>
+{% endblock %}
