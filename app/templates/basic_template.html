@@ -33,7 +33,7 @@
                             <div class="collapse navbar-collapse" id="mainNavbar">
                                 <div class="btn-group w-100">
                                     <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
-                                    <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
+                                    <a href="{{ url_for('openInventory') }}" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
                                     <!-- <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a> -->
                                     <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
                                         Notifications <span class="badge bg-danger">4</span>

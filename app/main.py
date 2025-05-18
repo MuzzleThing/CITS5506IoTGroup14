@@ -2,7 +2,7 @@ from app import app, socketio, db
 from flask import render_template, redirect, url_for, flash, request
 from app.forms import HomePageForm
 from app.models import Item
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from sqlalchemy import select,desc
 import threading
 import urllib.request
@@ -85,7 +85,7 @@ def listen_to_barcode_scanner():
                 print(f"Error processing barcode: {e}")
             keyboardInput = ""
 
-# Routes and view functions start here
+
 
 # Function to listen for "refresh" command in the terminal
 def listen_for_refresh_command():
@@ -119,6 +119,9 @@ def test_background_task():
 def handleConnect():
     print("Client connected")
 
+# Routes and view functions start here
+currentDate = date.today()
+
 @app.route('/test_reload')
 def test_reload():
     print("Emitting test reload_page event...")
@@ -142,11 +145,8 @@ def openHomepage():
     for item in items:
         image_path = os.path.join("app/static/images", f"{item.name}.jpg")
         item.has_image = os.path.exists(image_path)
-
-    currentTime = datetime.now()
         
-    currentDate = date.today()
-    return render_template('homepage.html', form=form, items=items, currentPage='homepage', currentDate=currentDate, currentTime=currentTime ,order=order)
+    return render_template('homepage.html', form=form, items=items, currentPage='homepage', currentDate=currentDate, order=order)
 
 @app.post('/')
 def recordItem():
@@ -162,6 +162,50 @@ def recordItem():
         flash("Error: please check your input again.", "error")
     return redirect(url_for('openHomepage'))
 
+@app.get('/inventory')
+def openInventory():
+    form = HomePageForm()
+    order = request.args.get('order', 'newest')  # Default to 'newest' if no argument is provided
+    items_query = select(Item)
+    if order == 'newest':
+        items_query = items_query.order_by(desc(Item.id))
+    elif order == 'oldest':
+        items_query = items_query.order_by(Item.id)
+    elif order == 'expiring':
+        items_query = items_query.order_by(Item.expiry_date)
+    items = db.session.execute(items_query).scalars().all()
+    return render_template('inventory.html', form=form, items=items, currentPage='inventory', currentDate=currentDate, order=order)
+
+@app.get('/deleteInventory')
+def deleteItem():
+    itemId = request.args.get('id')
+    entry = db.session.execute(select(Item).where(Item.id==itemId)).scalar_one_or_none()
+    if entry:
+        db.session.delete(entry)
+        db.session.commit()
+        flash("Item is successfully deleted.", "success")
+    else:
+        flash("Error: Item not found!", "error")
+    return redirect(url_for('openInventory'))
+
+@app.post('/inventory')
+def editItem():
+    itemId = request.args.get('id')
+    entry = db.session.execute(select(Item).where(Item.id==itemId)).scalar_one_or_none()
+    form = HomePageForm()
+    if form.validate_on_submit():
+        if entry:
+            entry.name = form.name.data
+            entry.quantity = form.quantity.data
+            entry.date = form.date.data
+            entry.expiry_date = form.expiryDate.data
+            db.session.commit()
+            flash("Item is successfully edited.", "success")
+        else:
+            flash("Error: Item not found!", "error")
+    else:
+        flash("Error: the form is submitted with invalid field(s)", "error")
+    return redirect(url_for('openInventory'))
 # Routes and view functions end here
 
 

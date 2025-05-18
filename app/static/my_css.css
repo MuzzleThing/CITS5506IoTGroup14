@@ -4,7 +4,13 @@ body {
     height: 100vh;
     overflow: hidden;
 }
+table, tr {
+    width: 100%;
+}
 
+.table-responsive{
+    overflow-y: scroll;
+}
 .btn {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Creates a shadow below the element */
 }
