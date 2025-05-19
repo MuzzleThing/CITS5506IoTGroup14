@@ -41,7 +41,8 @@
             </thead>
             <tbody>
                 {% for item in items %}
-                    <tr class="{% if (item.expiry_date - currentDate).days <= 1 %} table-danger
+                    <tr class="{% if (item.expiry_date - currentDate).days < 0 %} table-dark
+                        {% elif (item.expiry_date - currentDate).days <= 1 %} table-danger
                         {% elif (item.expiry_date - currentDate).days <= 3 %} table-warning 
                         {% else %} table-success
                         {% endif %}">
@@ -98,8 +99,8 @@
                         <br>
         
                         <div class="d-flex">
-                            <input type="submit" class="btn btn-success me-2" value="Submit">
-                            <button type="button" class="btn btn-danger ms-auto" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger me-2" data-bs-dismiss="modal">Cancel</button>
+                            <input type="submit" class="btn btn-success ms-auto" value="Submit">
                         </div>
                     </form>
                 </div>

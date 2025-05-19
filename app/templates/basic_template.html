@@ -16,14 +16,6 @@
             <div>
                 <!-- <h3>Smart Food Inventory Management System: {{currentPage}}</h3> -->
                 <div class="d-flex">
-                    <!-- <div class="btn-group">
-                        <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a>
-                        <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
-                            Notifications <span class="badge bg-danger">4</span>
-                        </a>
-                    </div> -->
                     <nav class="navbar navbar-expand-lg navbar-light bg-light w-100">
                         <div class="container-fluid p-0">
                             <!-- <a class="navbar-brand" href="#"> SFIMS</a> -->
@@ -35,9 +27,40 @@
                                     <a href="{{ url_for('openHomepage') }}" class="linkBtn btn btn-info {% if currentPage == 'homepage' %}active{% endif %}"> Home </a>
                                     <a href="{{ url_for('openInventory') }}" class="linkBtn btn btn-info {% if currentPage == 'inventory' %}active{% endif %}"> Inventory </a>
                                     <!-- <a href="#" class="linkBtn btn btn-info {% if currentPage == 'analytics' %}active{% endif %}"> Analytics </a> -->
-                                    <a href="#" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
+                                    <!-- <a href="{{ url_for('openNotifications')}}" class="linkBtn btn btn-info {% if currentPage == 'notifications' %}active{% endif %}">
                                         Notifications <span class="badge bg-danger">4</span>
-                                    </a>
+                                    </a> -->
+                                    <!-- <div class="btn-group">
+                                        <button type="button" class="btn btn-info dropdown-toggle linkBtn" data-bs-toggle="dropdown">
+                                            Notifications<span class="badge bg-danger">4</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {% for item in items %}
+                                                <li><span class="dropdown-item-text">
+                                                    <div class="alert
+                                                        {% if (item.expiry_date - currentDate).days < 0 %} alert-dark
+                                                        {% elif (item.expiry_date - currentDate).days <= 1 %} alert-danger
+                                                        {% elif (item.expiry_date - currentDate).days <= 3 %} alert-warning 
+                                                        {% else %} alert-success
+                                                        {% endif %}">
+                                                        {% if (item.expiry_date - currentDate).days < 0 %}
+                                                            Your {{ item.name }} has already expired. Please dispose of it.
+                                                        {% elif (item.expiry_date - currentDate).days <= 1 %}
+                                                            Your {{ item.name }} is expiring soon! Better finish it today.
+                                                        {% elif (item.expiry_date - currentDate).days <= 3 %}
+                                                            Your {{ item.name }} will expire in 3 days.
+                                                        {% endif %}
+                                                    </div>
+                                                </span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div> -->
+                                    <button type="button" class="btn btn-info linkBtn" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                                        Notifications
+                                        {% if badgeNum %}
+                                            <span class="badge bg-danger">{{badgeNum}}</span>
+                                        {% endif %}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -50,6 +73,49 @@
 
         {% block body %}
         {% endblock %}
+
+        <!-- The Modal -->
+        <div class="modal" id="notificationsModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Notifications</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="container" id="alertsContainer">
+                        {% for item in itemsToNotify %}
+                            <div class="alert
+                                {% if (item.expiry_date - currentDate).days < 0 %} alert-dark
+                                {% elif (item.expiry_date - currentDate).days <= 1 %} alert-danger
+                                {% elif (item.expiry_date - currentDate).days <= 3 %} alert-warning 
+                                {% else %} alert-success
+                                {% endif %}">
+                                {% if (item.expiry_date - currentDate).days < 0 %}
+                                    Your {{ item.name }} has already expired. Please dispose of it.
+                                {% elif (item.expiry_date - currentDate).days <= 1 %}
+                                    Your {{ item.name }} is expiring soon! Better finish it today.
+                                {% elif (item.expiry_date - currentDate).days <= 3 %}
+                                    Your {{ item.name }} will expire in 3 days.
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
+
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
         <script>
             // Connect to the WebSocket server

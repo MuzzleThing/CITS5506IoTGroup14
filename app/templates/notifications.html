@@ -1,0 +1,26 @@
+{% extends 'basic_template.html' %}
+{% block head %}
+    <title>
+        SFIMS-Notifications
+    </title>
+{% endblock %}
+{% block body %}
+    <div class="container" id="alertsContainer">
+        {% for item in items %}
+            <div class="alert
+                {% if (item.expiry_date - currentDate).days < 0 %} alert-dark
+                {% elif (item.expiry_date - currentDate).days <= 1 %} alert-danger
+                {% elif (item.expiry_date - currentDate).days <= 3 %} alert-warning 
+                {% else %} alert-success
+                {% endif %}">
+                {% if (item.expiry_date - currentDate).days < 0 %}
+                    Your {{ item.name }} has already expired. Please dispose of it.
+                {% elif (item.expiry_date - currentDate).days <= 1 %}
+                    Your {{ item.name }} is expiring soon! Better finish it today.
+                {% elif (item.expiry_date - currentDate).days <= 3 %}
+                    Your {{ item.name }} will expire in 3 days.
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

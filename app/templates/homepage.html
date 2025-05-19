@@ -20,7 +20,8 @@
             <div class="row row-cols-1 row-cols-lg-2 itemsGrid">
                 {% for item in items[:4] %}
                     <div class="col itemContainer
-                    {% if (item.expiry_date - currentDate).days <= 1 %} bg-danger
+                    {% if (item.expiry_date - currentDate).days < 0 %} text-bg-dark
+                    {% elif (item.expiry_date - currentDate).days <= 1 %} bg-danger
                     {% elif (item.expiry_date - currentDate).days <= 3 %} bg-warning 
                     {% else %} bg-success
                     {% endif %}">
@@ -60,8 +61,9 @@
                 <label class="form-label"> Expiry Date (Optional) </label><br>
                 {{ form.expiryDate(class="form-control") }}
                 <br>
- 
-                <input type="submit" class="btn btn-success" value="Submit">
+                <div class="d-flex">
+                    <input type="submit" class="btn btn-success mx-auto" value="Submit">
+                </div>
             </form>
 
             {% with messages = get_flashed_messages(with_categories=True) %}

@@ -115,6 +115,7 @@ def test_background_task():
     except Exception as e:
         print(f"Error in test_background_task: {e}")
 
+
 @socketio.on('connect')
 def handleConnect():
     print("Client connected")
@@ -140,13 +141,16 @@ def openHomepage():
     elif order == 'expiring':
         items_query = items_query.order_by(Item.expiry_date)
     items = db.session.execute(items_query.limit(8)).scalars().all()
+    itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
+    badgeNum = len(list(itemsToNotify))
+    itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
 
      # Check if the image exists for each item
     for item in items:
         image_path = os.path.join("app/static/images", f"{item.name}.jpg")
         item.has_image = os.path.exists(image_path)
         
-    return render_template('homepage.html', form=form, items=items, currentPage='homepage', currentDate=currentDate, order=order)
+    return render_template('homepage.html', form=form, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='homepage', currentDate=currentDate, order=order)
 
 @app.post('/')
 def recordItem():
@@ -174,7 +178,10 @@ def openInventory():
     elif order == 'expiring':
         items_query = items_query.order_by(Item.expiry_date)
     items = db.session.execute(items_query).scalars().all()
-    return render_template('inventory.html', form=form, items=items, currentPage='inventory', currentDate=currentDate, order=order)
+    itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
+    badgeNum = len(list(itemsToNotify))
+    itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
+    return render_template('inventory.html', form=form, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='inventory', currentDate=currentDate, order=order)
 
 @app.get('/deleteInventory')
 def deleteItem():
@@ -206,6 +213,11 @@ def editItem():
     else:
         flash("Error: the form is submitted with invalid field(s)", "error")
     return redirect(url_for('openInventory'))
+
+@app.get('/notifications')
+def openNotifications():
+    items = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
+    return render_template('notifications.html', currentDate=currentDate, items=items, currentPage="notifications")
 # Routes and view functions end here
 
 
@@ -216,6 +228,6 @@ if __name__ == '__main__': # Run the server by command line: python -m app.main
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
 
-    socketio.run(app, debug=True) 
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True) 
     # Format to specify IP and port: socketio.run(app, host="0.0.0.0", port=5000, debug = True)
     # the address is http://127.0.0.1:5000

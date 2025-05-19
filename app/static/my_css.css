@@ -21,6 +21,7 @@ table, tr {
     margin: 0.5rem 1rem;
     border-radius: 5rem;
     max-width: 10rem;
+    text-align: center;
     /* width: 10rem; */
 }
 
