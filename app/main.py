@@ -1,16 +1,25 @@
 from app import app, socketio, db
 from flask import render_template, redirect, url_for, flash, request
-from app.forms import HomePageForm
-from app.models import Item
+from app.forms import HomePageForm, ModalForm
+from app.models import Item, ExpiryTable
 from datetime import timedelta, date
 from sqlalchemy import select,desc
 import threading
 import urllib.request
 import json
 import os
+import cv2
+import numpy as np
+import tflite_runtime.interpreter as tflite
+import RPi.GPIO as GPIO
 
 APIKey = "x8hfpalze3rcc8h1idminp3nwnjgmh" # The API key of a free trial account on BarcodeLookup.com
 # In total there is 50 calls available, don't squander them
+
+LED_PIN = 17  # Use the GPIO pin number you connect the LED to
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
 
 keyboardInput = ""
 
@@ -115,10 +124,85 @@ def test_background_task():
     except Exception as e:
         print(f"Error in test_background_task: {e}")
 
+# Get the directory of the current file (main.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Build absolute paths to the model and labels
+MODEL_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft.tflite")
+LABELS_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft_labels.json")
+
+# Load TFLite model and allocate tensors
+interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
+
+# Get input and output details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+# Load labels
+with open(LABELS_PATH) as f:
+    labels = json.load(f)
+
+def preprocess(frame):
+    img = cv2.resize(frame, (224, 224))  # adjust to your model's input size
+    img = img.astype(np.float32) / 255.0
+    img = np.expand_dims(img, axis=0)
+    return img
+
+def classify_frame(frame):
+    img = preprocess(frame)
+    interpreter.set_tensor(input_details[0]['index'], img)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    class_idx = int(np.argmax(output_data))
+    class_label = labels[str(class_idx)]  # or labels[class_idx] depending on format
+    return class_label
+
+def camera_loop():
+    cap = cv2.VideoCapture(0)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        label = classify_frame(frame)
+        print("Detected:", label)
+        # Turn ON the LED
+        GPIO.output(LED_PIN, GPIO.HIGH)
+
+        # Optionally, emit via socketio or update UI here
+        socketio.emit("confirmItem", {'name':label})
+
+         # Wait for user to confirm or close modal
+        modal_event.clear()
+        print("Waiting for user to confirm or close modal...")
+        modal_event.wait()  # This blocks until set by the event handler
+
+        # Turn OFF the LED
+        GPIO.output(LED_PIN, GPIO.LOW)
+
+        # Optionally, add a short sleep to avoid rapid looping
+        socketio.sleep(0.1)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cap.release()
+    cv2.destroyAllWindows()
+
+modal_event = threading.Event()
 
 @socketio.on('connect')
 def handleConnect():
     print("Client connected")
+
+@socketio.on('modal_closed')
+def handle_modal_closed():
+    print("Modal closed by user.")
+    modal_event.set()
+
+@socketio.on('modal_confirmed')
+def handle_modal_confirmed():
+    print("Modal confirmed by user.")
+    modal_event.set()
 
 # Routes and view functions start here
 currentDate = date.today()
@@ -132,6 +216,7 @@ def test_reload():
 @app.get('/')
 def openHomepage():
     form = HomePageForm()
+    hiddenForm = ModalForm()
     order = request.args.get('order', 'newest')  # Default to 'newest' if no argument is provided
     items_query = select(Item)
     if order == 'newest':
@@ -150,7 +235,7 @@ def openHomepage():
         image_path = os.path.join("app/static/images", f"{item.name}.jpg")
         item.has_image = os.path.exists(image_path)
         
-    return render_template('homepage.html', form=form, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='homepage', currentDate=currentDate, order=order)
+    return render_template('homepage.html', form=form, hiddenForm=hiddenForm, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='homepage', currentDate=currentDate, order=order)
 
 @app.post('/')
 def recordItem():
@@ -169,6 +254,7 @@ def recordItem():
 @app.get('/inventory')
 def openInventory():
     form = HomePageForm()
+    hiddenForm = ModalForm()
     order = request.args.get('order', 'newest')  # Default to 'newest' if no argument is provided
     items_query = select(Item)
     if order == 'newest':
@@ -181,7 +267,7 @@ def openInventory():
     itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
     badgeNum = len(list(itemsToNotify))
     itemsToNotify = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
-    return render_template('inventory.html', form=form, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='inventory', currentDate=currentDate, order=order)
+    return render_template('inventory.html', form=form, hiddenForm=hiddenForm, items=items, itemsToNotify=itemsToNotify, badgeNum=badgeNum, currentPage='inventory', currentDate=currentDate, order=order)
 
 @app.get('/deleteInventory')
 def deleteItem():
@@ -218,13 +304,31 @@ def editItem():
 def openNotifications():
     items = db.session.execute(select(Item).where(Item.expiry_date < currentDate + timedelta(days=3))).scalars()
     return render_template('notifications.html', currentDate=currentDate, items=items, currentPage="notifications")
+
+@app.post('/confirmItem')
+def confirmItem():
+    hiddenForm = ModalForm()
+    if hiddenForm.validate_on_submit():
+        name = hiddenForm.name.data
+        expiry_days = db.session.execute(select(ExpiryTable.expiry_days).where(ExpiryTable.name == name)).scalar_one_or_none()
+        if expiry_days is None:
+            flash("No expiry info found for this item.", "error")
+            return redirect(request.referrer or url_for('openHomepage'))
+        # print("Debugging here:", form.date.data, expiry)
+        item = Item (name=name, quantity=hiddenForm.quantity.data, date=hiddenForm.date.data, expiry_date=hiddenForm.date.data + timedelta(days=expiry_days))
+        db.session.add(item)
+        db.session.commit()
+        flash("Item recorded sucessfully", "success")
+    else:
+        flash("Error: please check your input again.", "error")
+    return redirect(request.referrer or url_for('openHomepage'))
 # Routes and view functions end here
 
 
 if __name__ == '__main__': # Run the server by command line: python -m app.main
 
     socketio.start_background_task(listen_to_barcode_scanner)
-
+    socketio.start_background_task(camera_loop)  # <-- Add this line
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
 

@@ -116,6 +116,50 @@
             </div>
         </div>
 
+        <!-- hidden modal for image recognition -->
+        <div class="modal" id="hiddenModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Confirm Your Item</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <form action="{{ url_for('confirmItem') }}" method="POST" id="hiddenModalForm">
+                        {{ hiddenForm.hidden_tag() }}
+
+                        <label class="form-label"> Food Name </label><br>
+                        {{ hiddenForm.name(class="form-control", id="hiddenModalName") }}
+                        <br>
+
+                        <label class="form-label"> Quantity </label><br>
+                        {{ hiddenForm.quantity(class="form-control", id="hiddenModalQuantity") }}
+                        <br>
+
+                        <label class="form-label"> Date </label><br>
+                        {{ hiddenForm.date(class="form-control", id="hiddenModalDate") }}
+                        <br>
+        
+                        <div class="d-flex">
+                            <button type="button" class="btn btn-danger me-2" data-bs-dismiss="modal">Cancel</button>
+                            <input type="submit" class="btn btn-success ms-auto" value="Submit">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal footer -->
+                <!-- <div class="modal-footer">
+                    
+                </div> -->
+
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
         <script>
             // Connect to the WebSocket server
@@ -141,6 +185,26 @@
             socket.on("itemNotFound", function(data){
                 console.log(data.message)
                 alert(data.message)
+            });
+
+            socket.on("confirmItem", function(data){
+                // Fill the form fields with data from the event
+                document.getElementById('hiddenModalName').value = data.name || '';
+                document.getElementById('hiddenModalDate').value = {{ currentDate|tojson }};
+
+                // Show the modal
+                var myModal = new bootstrap.Modal(document.getElementById('hiddenModal'));
+                myModal.show();
+            });
+            // When the modal is closed (cancel or close button)
+            document.getElementById('hiddenModal').addEventListener('hidden.bs.modal', function () {
+                socket.emit('modal_closed');
+            });
+
+            // When the form is submitted (user confirms)
+            document.getElementById('hiddenModalForm').addEventListener('submit', function (e) {
+                socket.emit('modal_confirmed');
+                // Let the form submit as usual, or preventDefault if you handle it via AJAX
             });
         </script>
     </body>

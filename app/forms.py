@@ -8,3 +8,8 @@ class HomePageForm(FlaskForm):
     quantity = IntegerField('Quantity', default=1, validators=[DataRequired(), NumberRange(min=1)])
     date = DateField('Date', default=date.today, validators=[DataRequired()])
     expiryDate = DateField('Expiry Date', validators=[Optional()])
+
+class ModalForm(FlaskForm):
+    name = StringField('Food Name', validators=[DataRequired(), Length(min=1, max=128)])
+    quantity = IntegerField('Quantity', default=1, validators=[DataRequired(), NumberRange(min=1)])
+    date = DateField('Date', default=date.today, validators=[DataRequired()])
