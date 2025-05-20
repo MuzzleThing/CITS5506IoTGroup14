@@ -4,6 +4,7 @@ from app.forms import HomePageForm, ModalForm
 from app.models import Item, ExpiryTable
 from datetime import timedelta, date
 from sqlalchemy import select,desc
+from picamera2 import Picamera2
 import threading
 import urllib.request
 import json
@@ -159,34 +160,23 @@ def classify_frame(frame):
     return class_label
 
 def camera_loop():
-    cap = cv2.VideoCapture(0)
+    picam2 = Picamera2()
+    picam2.start()
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        frame = picam2.capture_array()
+        # Convert BGRA to BGR for OpenCV/model if needed
+        frame = frame[:, :, :3]
         label = classify_frame(frame)
         print("Detected:", label)
-        # Turn ON the LED
         GPIO.output(LED_PIN, GPIO.HIGH)
+        socketio.emit("confirmItem", {'name': label})
 
-        # Optionally, emit via socketio or update UI here
-        socketio.emit("confirmItem", {'name':label})
-
-         # Wait for user to confirm or close modal
         modal_event.clear()
         print("Waiting for user to confirm or close modal...")
-        modal_event.wait()  # This blocks until set by the event handler
+        modal_event.wait()
 
-        # Turn OFF the LED
         GPIO.output(LED_PIN, GPIO.LOW)
-
-        # Optionally, add a short sleep to avoid rapid looping
         socketio.sleep(0.1)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
 
 modal_event = threading.Event()
 
