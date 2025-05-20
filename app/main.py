@@ -228,6 +228,6 @@ if __name__ == '__main__': # Run the server by command line: python -m app.main
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
 
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True) 
+    socketio.run(app, host="0.0.0.0", port=5000, debug=False) 
     # Format to specify IP and port: socketio.run(app, host="0.0.0.0", port=5000, debug = True)
     # the address is http://127.0.0.1:5000
