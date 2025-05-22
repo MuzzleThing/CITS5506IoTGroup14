@@ -154,21 +154,25 @@ def classify_frame(frame):
     img = preprocess(frame)
     interpreter.set_tensor(input_details[0]['index'], img)
     interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
+    output_data = interpreter.get_tensor(output_details[0]['index'])[0]
     class_idx = int(np.argmax(output_data))
+    confidence = float(np.max(output_data))
     class_label = labels[str(class_idx)]  # or labels[class_idx] depending on format
-    return class_label
+    return class_label, confidence
 
 def camera_loop():
+    CONFIDENCE_THRESHOLD = 0.7  # Set your desired threshold here
     picam2 = Picamera2()
     picam2.start()
     while True:
         if connected_clients > 0:
             frame = picam2.capture_array()
-            # Convert BGRA to BGR for OpenCV/model if needed
             frame = frame[:, :, :3]
-            label = classify_frame(frame)
-            print("Detected:", label)
+            label, confidence = classify_frame(frame)
+            print(f"Detected: {label} (confidence: {confidence:.2f})")
+            if confidence < CONFIDENCE_THRESHOLD:
+                socketio.sleep(0.1)
+                continue  # Skip if not confident enough
             GPIO.output(LED_PIN, GPIO.HIGH)
             print("Emiting confirmItem socket event now...")
             socketio.emit("confirmItem", {'name': label})
