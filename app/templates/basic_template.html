@@ -190,7 +190,7 @@
             socket.on("confirmItem", function(data){
                 // Fill the form fields with data from the event
                 document.getElementById('hiddenModalName').value = data.name || '';
-                document.getElementById('hiddenModalDate').value = {{ currentDate|tojson }};
+                //document.getElementById('hiddenModalDate').value = {{ currentDate|tojson }};
 
                 // Show the modal
                 var myModal = new bootstrap.Modal(document.getElementById('hiddenModal'));

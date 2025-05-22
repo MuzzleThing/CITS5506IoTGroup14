@@ -4,23 +4,23 @@ from app.forms import HomePageForm, ModalForm
 from app.models import Item, ExpiryTable
 from datetime import timedelta, date
 from sqlalchemy import select,desc
-from picamera2 import Picamera2
+# from picamera2 import Picamera2
 import threading
 import urllib.request
 import json
 import os
 import cv2
 import numpy as np
-import tflite_runtime.interpreter as tflite
-import RPi.GPIO as GPIO
+# import tflite_runtime.interpreter as tflite
+# import RPi.GPIO as GPIO
 
 APIKey = "x8hfpalze3rcc8h1idminp3nwnjgmh" # The API key of a free trial account on BarcodeLookup.com
 # In total there is 50 calls available, don't squander them
 
 LED_PIN = 17  # Use the GPIO pin number you connect the LED to
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(LED_PIN, GPIO.OUT)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(LED_PIN, GPIO.OUT)
 
 keyboardInput = ""
 
@@ -132,13 +132,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft.tflite")
 LABELS_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft_labels.json")
 
-# Load TFLite model and allocate tensors
-interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-interpreter.allocate_tensors()
+# # Load TFLite model and allocate tensors
+# interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+# interpreter.allocate_tensors()
 
-# Get input and output details
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+# # Get input and output details
+# input_details = interpreter.get_input_details()
+# output_details = interpreter.get_output_details()
 
 # Load labels
 with open(LABELS_PATH) as f:
@@ -163,26 +163,42 @@ def camera_loop():
     picam2 = Picamera2()
     picam2.start()
     while True:
-        frame = picam2.capture_array()
-        # Convert BGRA to BGR for OpenCV/model if needed
-        frame = frame[:, :, :3]
-        label = classify_frame(frame)
-        print("Detected:", label)
-        GPIO.output(LED_PIN, GPIO.HIGH)
-        socketio.emit("confirmItem", {'name': label})
+        if connected_clients > 0:
+            frame = picam2.capture_array()
+            # Convert BGRA to BGR for OpenCV/model if needed
+            frame = frame[:, :, :3]
+            label = classify_frame(frame)
+            print("Detected:", label)
+            GPIO.output(LED_PIN, GPIO.HIGH)
+            print("Emiting confirmItem socket event now...")
+            socketio.emit("confirmItem", {'name': label})
+            print("Socket event confirmItem emitted")
 
-        modal_event.clear()
-        print("Waiting for user to confirm or close modal...")
-        modal_event.wait()
+            modal_event.clear()
+            print("Waiting for user to confirm or close modal...")
+            while not modal_event.is_set():
+                socketio.sleep(0.1)
 
-        GPIO.output(LED_PIN, GPIO.LOW)
-        socketio.sleep(0.1)
+            GPIO.output(LED_PIN, GPIO.LOW)
+            socketio.sleep(0.1)
+        else:
+            socketio.sleep(0.5)
 
 modal_event = threading.Event()
 
+connected_clients = 0
+
 @socketio.on('connect')
-def handleConnect():
-    print("Client connected")
+def handle_connect():
+    global connected_clients
+    connected_clients += 1
+    print(f"Client connected. Total: {connected_clients}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    global connected_clients
+    connected_clients -= 1
+    print(f"Client disconnected. Total: {connected_clients}")
 
 @socketio.on('modal_closed')
 def handle_modal_closed():
@@ -202,6 +218,12 @@ def test_reload():
     print("Emitting test reload_page event...")
     socketio.emit('reload_page', {'message': 'Test reload triggered!'}, include_self=True)
     return "Test reload event emitted"
+
+@app.route('/test_modal')
+def test_modal():
+    print("Emitting test confirmItem event")
+    socketio.emit("confirmItem", {"name" : "Banana"})
+    return "Test confirmItem event emitted"
 
 @app.get('/')
 def openHomepage():
@@ -318,7 +340,7 @@ def confirmItem():
 if __name__ == '__main__': # Run the server by command line: python -m app.main
 
     socketio.start_background_task(listen_to_barcode_scanner)
-    socketio.start_background_task(camera_loop)  # <-- Add this line
+    # socketio.start_background_task(camera_loop)  # <-- Add this line
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
 
