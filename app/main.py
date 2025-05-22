@@ -4,23 +4,23 @@ from app.forms import HomePageForm, ModalForm
 from app.models import Item, ExpiryTable
 from datetime import timedelta, date
 from sqlalchemy import select,desc
-# from picamera2 import Picamera2
+from picamera2 import Picamera2
 import threading
 import urllib.request
 import json
 import os
 import cv2
 import numpy as np
-# import tflite_runtime.interpreter as tflite
-# import RPi.GPIO as GPIO
+import tflite_runtime.interpreter as tflite
+import RPi.GPIO as GPIO
 
 APIKey = "x8hfpalze3rcc8h1idminp3nwnjgmh" # The API key of a free trial account on BarcodeLookup.com
 # In total there is 50 calls available, don't squander them
 
 LED_PIN = 17  # Use the GPIO pin number you connect the LED to
 
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setup(LED_PIN, GPIO.OUT)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
 
 keyboardInput = ""
 
@@ -132,13 +132,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft.tflite")
 LABELS_PATH = os.path.join(BASE_DIR, "models", "food_classifier_ft_labels.json")
 
-# # Load TFLite model and allocate tensors
-# interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-# interpreter.allocate_tensors()
+# Load TFLite model and allocate tensors
+interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
 
-# # Get input and output details
-# input_details = interpreter.get_input_details()
-# output_details = interpreter.get_output_details()
+# Get input and output details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 # Load labels
 with open(LABELS_PATH) as f:
@@ -340,7 +340,7 @@ def confirmItem():
 if __name__ == '__main__': # Run the server by command line: python -m app.main
 
     socketio.start_background_task(listen_to_barcode_scanner)
-    # socketio.start_background_task(camera_loop)  # <-- Add this line
+    socketio.start_background_task(camera_loop)
     keyboardInputThread = threading.Thread(target=listenToKeyboard, daemon=True)
     keyboardInputThread.start()
 
