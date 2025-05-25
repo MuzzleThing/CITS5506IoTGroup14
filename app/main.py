@@ -37,13 +37,11 @@ def listen_to_barcode_scanner():
         if keyboardInput != "":
             try:
                 with app.app_context():
-                    # Prompt for barcode input
+                    # Read barcode from input
                     barcode = keyboardInput
-                    # print(f"barcode is {barcode}")
-                    
+
                     # Construct the API URL
                     url = f"https://api.barcodelookup.com/v3/products?barcode={barcode}&formatted=y&key={APIKey}"
-                    # print("url is made")
                     
                     # Make the API request
                     try:
@@ -160,12 +158,13 @@ def classify_frame(frame):
     class_label = labels[str(class_idx)]  # or labels[class_idx] depending on format
     return class_label, confidence
 
+# This function captures frames with RPi camera and classifies them with provided model.
 def camera_loop():
-    CONFIDENCE_THRESHOLD = 0.7  # Set your desired threshold here
+    CONFIDENCE_THRESHOLD = 0.7 # Only classification with a confidence higher than this will be passed.
     picam2 = Picamera2()
     picam2.start()
     while True:
-        if connected_clients > 0:
+        if connected_clients > 0: # Camera only works when there are WebSocket clients to save resources
             frame = picam2.capture_array()
             frame = frame[:, :, :3]
             label, confidence = classify_frame(frame)
@@ -173,19 +172,22 @@ def camera_loop():
             if confidence < CONFIDENCE_THRESHOLD:
                 socketio.sleep(0.1)
                 continue  # Skip if not confident enough
-            GPIO.output(LED_PIN, GPIO.HIGH)
+            GPIO.output(LED_PIN, GPIO.HIGH) # light LED to prompt user stop filming to check web app
             print("Emiting confirmItem socket event now...")
             socketio.emit("confirmItem", {'name': label})
             print("Socket event confirmItem emitted")
 
             modal_event.clear()
             print("Waiting for user to confirm or close modal...")
+            # The camera will stop taking any new frame until the user either confirm or cancel
             while not modal_event.is_set():
                 socketio.sleep(0.1)
 
             GPIO.output(LED_PIN, GPIO.LOW)
             socketio.sleep(0.1)
         else:
+            # After completing a classification, there is a longer interval
+            # for the user to replace the item in front of the camera
             socketio.sleep(0.5)
 
 modal_event = threading.Event()
